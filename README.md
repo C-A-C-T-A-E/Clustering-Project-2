@@ -1,68 +1,91 @@
 # Clustering Project 2
 
-## Task 1: K-means on Toy Problem (Points on Cartesian plane)
+This repository contains our team’s full submission for the vertiport clustering project. We organized the work into three tasks and documented the methodology, intermediate outputs, and final comparison results.
 
-This task uses a small set of points in the Cartesian plane and applies K-means clustering to group them into three clusters. The k-mean algorithm is written manually without using any standard library such as scikit-learn for better understanding the basics of K-means.
+## Our Approach
 
-### Given points
+We solved the project in a staged way rather than jumping directly to the final vertiport sites.
 
-- `[2, 10]`
-- `[2, 5]`
-- `[8, 4]`
-- `[5, 8]`
-- `[7, 5]`
-- `[6, 4]`
-- `[1, 2]`
-- `[4, 9]`
+1. **Task 1**: we first implemented K-means manually on a small toy dataset to demonstrate that we understood the algorithm itself.
+2. **Task 2**: we then used the South Korea territory boundary to generate evenly distributed points inside the polygon so that we could simulate a practical spatial placement strategy.
+3. **Task 3**: finally, we built a scoring pipeline for candidate vertiports using traffic, hospital, and tourist attraction data. We ranked all candidates, kept the top candidates, and compared two final-selection approaches:
+   - K-means on the full candidate list, and
+   - K-means only on the top-ranked candidate list.
 
-### Initial centroids
+We prefer the top-candidate approach as the final recommendation because it combines multiple datasets before clustering, which makes the result more efficient and easier to justify.
 
-- `C1 = [2, 10]`
-- `C2 = [5, 8]`
-- `C3 = [1, 2]`
+## Task Documents
 
-### Method used
+The detailed explanation for each task is written in the task-specific README files:
 
-We solve the problem using the K-means algorithm in `task1/task1.py`.
+- [Task 1](task1/README.md)
+- [Task 2](task2/README.md)
+- [Task 3](task3/README.md)
 
-The process is:
-1. Assign each point to the nearest centroid.
-2. Recalculate the centroid of each cluster.
-3. Repeat until the centroids stop changing meaningfully.
+## Repository Layout
 
-The stopping strategy is:
-- stop when `np.allclose(centroids, new_centroids, atol=tol)` becomes true,
-- where `tol = 1e-4`,
-- and `max_iter = 100` acts as a safety limit.
-  
-## Clustering Plot
-This is the result of the clustering acheived form utilizing the k-means algorithm. 
+```text
+.
+├─ data/                         raw input data and generated score tables
+├─ task1/                        toy K-means implementation
+├─ task2/                        territory-based even distribution script
+├─ task3/
+│  ├─ task3.1/                   scoring and vertiport selection scripts
+│  └─ task3.2/                   reserved for future work
+└─ Project_2_description.pdf     assignment description
+```
 
-![Clustering result](task1/task1_figure.webp)
+## Main Outputs
 
-### Answers to the questions
+- `task1/task1_figure.webp`
+- `task2/task2_centroids_N*.csv`
+- `task2/task2_centroids_N*.png`
+- `task3/task3.1/produced_data/Processed_Data_vertiport_candidates_scores.csv`
+- `task3/task3.1/produced_data/Top_400_Candidates.csv`
+- `task3/task3.1/produced_data/allcandidate_final_vertiport_sites.csv`
+- `task3/task3.1/produced_data/topcandidate_final_vertiport_sites.csv`
+- `task3/task3.1/produced_data/allcandidate_kmeans_plot.png`
+- `task3/task3.1/produced_data/topcandidate_kmeans_plot.png`
 
-#### 1. How many iterations are needed to complete the clustering task?
-The clustering task completed in **4 iterations**.
+## Environment
 
-#### 2. What is your team’s strategy to stop the iterations?
-The iterations stop when the centroid positions no longer change significantly. In the code, this is checked using `np.allclose(..., atol=1e-4)`. A maximum iteration limit is also used to avoid infinite looping.
+Recommended packages:
 
-#### 3. What do the clustering results look like?
-The final cluster groups are:
+- pandas
+- numpy
+- matplotlib
+- scikit-learn
+- shapely
 
-- **Cluster 1**: `[2, 10]`, `[5, 8]`, `[4, 9]`
-- **Cluster 2**: `[8, 4]`, `[7, 5]`, `[6, 4]`
-- **Cluster 3**: `[2, 5]`, `[1, 2]`
+Install:
 
-The final centroid points are:
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install pandas numpy matplotlib scikit-learn shapely
+```
 
-- **Centroid 1**: `[3.66666667, 9.0]`
-- **Centroid 2**: `[7.0, 4.33333333]`
-- **Centroid 3**: `[1.5, 3.5]`
+## Quick Run
 
-### Conclusion
+```powershell
+# Task 1
+py -3 task1\task1.py
 
-The clustering looks valid because the points inside each cluster are close to one another, and each final centroid is located near the center of its group.
+# Task 2
+py -3 task2\even_distribution.py data\Data_South_Korea_territory.csv --n-points 17
 
+# Task 3 scoring
+py -3 task3\task3.1\build_candidate_scores.py --candidates-csv data\Data_vertiport_candidates.csv --hospitals-csv data\General_Hospitals_Coordinates.csv --tour-csv data\Tourist_Attraction_Data.csv --traffic-csv data\Traffic_Data.csv --output-processed task3\task3.1\produced_data\Processed_Data_vertiport_candidates_scores.csv --top-n 400 --output-top task3\task3.1\produced_data\Top_400_Candidates.csv
 
+# Task 3 full candidate comparison
+py -3 task3\task3.1\kmeans_17_vertiports.py data\Data_vertiport_candidates.csv data\Data_South_Korea_territory.csv --k 17 --random-state 42
+
+# Task 3 top candidate comparison
+py -3 task3\task3.1\kmeans_on_top_candidates.py --candidates task3\task3.1\produced_data\Top_400_Candidates.csv --k 17 --random-state 42
+```
+
+## Notes
+
+- `Top_400_Candidates.csv` is created by scoring all candidates and sorting by `Total_Score`.
+- Some Jeju candidates appear outside the plotted polygon because the provided territory boundary file is not a perfect Jeju boundary.
+- `task3/task3.1/produced_data/` contains the comparison-ready outputs for both approaches.
