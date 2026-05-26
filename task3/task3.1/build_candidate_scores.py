@@ -62,32 +62,35 @@ def parse_traffic_values(series: pd.Series) -> np.ndarray:
 
 
 def main() -> None:
+    script_dir = Path(__file__).resolve().parent
+    project_dir = script_dir.parent.parent
+
     parser = argparse.ArgumentParser(
         description="Build candidate scores using traffic, hospitals, and tourist attractions."
     )
     parser.add_argument(
         "--candidates-csv",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "Data_vertiport_candidates.csv"),
+        default=str(project_dir / "data" / "Data_vertiport_candidates.csv"),
         help="Path to candidate points CSV.",
     )
     parser.add_argument(
         "--hospitals-csv",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "General_Hospitals_Coordinates.csv"),
+        default=str(project_dir / "data" / "General_Hospitals_Coordinates.csv"),
         help="Path to hospital coordinates CSV.",
     )
     parser.add_argument(
         "--tour-csv",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "Tourist_Attraction_Data.csv"),
+        default=str(project_dir / "data" / "Tourist_Attraction_Data.csv"),
         help="Path to tourist attraction coordinates CSV.",
     )
     parser.add_argument(
         "--traffic-csv",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "Traffic_Data.csv"),
+        default=str(project_dir / "data" / "Traffic_Data.csv"),
         help="Path to traffic points CSV.",
     )
     parser.add_argument(
         "--output-processed",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "Processed_Data_vertiport_candidates_scores.csv"),
+        default=str(script_dir / "produced_data" / "Processed_Data_vertiport_candidates_scores.csv"),
         help="Output CSV path for all scored candidates.",
     )
     parser.add_argument(

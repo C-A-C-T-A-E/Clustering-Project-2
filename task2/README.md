@@ -9,6 +9,7 @@ Use the territory boundary from `data/Data_South_Korea_territory.csv`, sample ma
 ## Script
 
 - `task2/even_distribution.py`
+- `task2/task2.py` (legacy prototype, kept for reference only; not part of final workflow)
 
 ## Method
 

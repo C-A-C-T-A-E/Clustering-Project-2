@@ -28,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description="KMeans on Top candidates and snap centroids to nearest real candidate")
     script_dir = Path(__file__).resolve().parent
     project_dir = script_dir.parent.parent
-    default_candidates = project_dir / "data" / "Top_400_Candidates.csv"
+    default_candidates = script_dir / "produced_data" / "Top_400_Candidates.csv"
     default_territory = project_dir / "data" / "Data_South_Korea_territory.csv"
 
     parser.add_argument("--candidates", default=str(default_candidates), help="Path to candidates CSV")
