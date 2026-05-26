@@ -1,0 +1,146 @@
+import os
+import numpy as np
+import pandas as pd
+import shapely
+import matplotlib.pyplot as plt
+
+# =========================================================================
+# STEP 1: Extract grid coordinates inside South Korea territory
+# =========================================================================
+
+# Load territory boundary data
+base_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(base_dir, 'Data_South_Korea_territory.csv')
+df = pd.read_csv(file_path)
+
+lon = df['Longitude (deg)'].values
+lat = df['Latitude (deg)'].values
+
+# Generate a polygon object based on the territory boundary data
+territory_polygon = shapely.Polygon(list(zip(lon, lat)))
+
+# Generate a regular mesh grid covering the entire bounding box
+grid_size = 100 
+lon_linspace = np.linspace(lon.min(), lon.max(), grid_size)
+lat_linspace = np.linspace(lat.min(), lat.max(), grid_size)
+lon_grid, lat_grid = np.meshgrid(lon_linspace, lat_linspace)
+
+# Convert all grid points to Shapely Point objects and identify points inside the territory
+points_grid = shapely.points(lon_grid, lat_grid)
+mask = shapely.contains(territory_polygon, points_grid)
+
+# Extract coordinates located inside the territory boundary
+inside_lon = lon_grid[mask]
+inside_lat = lat_grid[mask]
+
+# Convert the filtered inside points into a DataFrame
+output_df = pd.DataFrame({
+    'Longitude (deg)': inside_lon,
+    'Latitude (deg)': inside_lat
+})
+
+# Save the filtered mesh coordinates as a CSV file
+output_filename = 'South_Korea_mesh_inside.csv'
+output_df.to_csv(output_filename, index=False)
+
+print(f"🎉 File saved successfully! A total of {len(output_df)} grid coordinates are saved in '{output_filename}'.")
+
+
+# =========================================================================
+# STEP 2: Plug the extracted coordinates into K-Means Clustering
+# =========================================================================
+
+# Format input data: X-axis = Longitude, Y-axis = Latitude
+points = output_df[['Longitude (deg)', 'Latitude (deg)']].values
+
+# Set the number of clusters (centroids) to 10
+k = 10
+np.random.seed(42)  # Set seed for reproducibility
+random_indices = np.random.choice(len(points), k, replace=False)
+centroids = points[random_indices]
+
+tol = 1e-4
+iterations_taken = 0
+
+# Run the K-Means loop indefinitely until centroids converge completely
+while True:
+    iterations_taken += 1
+    clusters = []
+
+    # Assign each grid point to its nearest centroid
+    for point in points:
+        distances = np.linalg.norm(point - centroids, axis=1)
+        cluster = np.argmin(distances)
+        clusters.append(cluster)
+
+    clusters = np.array(clusters)
+
+    # Update centroids by calculating the mean of points in each cluster
+    new_centroids = []
+    for i in range(k):
+        cluster_points = points[clusters == i]
+        
+        # Keep the existing centroid if a cluster becomes empty
+        if len(cluster_points) == 0:
+            new_centroid = centroids[i]
+        else:
+            new_centroid = cluster_points.mean(axis=0)
+            
+        new_centroids.append(new_centroid)
+
+    new_centroids = np.array(new_centroids)
+
+    # Break the loop when centroids stop moving (Convergence)
+    if np.allclose(centroids, new_centroids, atol=tol):
+        centroids = new_centroids
+        break
+
+    centroids = new_centroids
+
+print(f"\n⚡ K-Means Clustering complete! Converged after {iterations_taken} iterations.")
+print("\nFinal 10 Centroid Coordinates (Longitude, Latitude):")
+for idx, center in enumerate(centroids):
+    print(f"Centroid {idx + 1}: Longitude={center[0]:.4f}, Latitude={center[1]:.4f}")
+
+
+# =========================================================================
+# STEP 3: Visualize the clustering results on the South Korea Map
+# =========================================================================
+
+# Use a colormap to automatically assign 10 distinct colors
+cmap = plt.cm.get_cmap('tab10', k)
+
+plt.figure(figsize=(8, 10))
+
+# Scatter plot for the mesh grid points belonging to each cluster
+for i in range(k):
+    cluster_points = points[clusters == i]
+    plt.scatter(
+        cluster_points[:, 0], # Longitude
+        cluster_points[:, 1], # Latitude
+        color=cmap(i),
+        s=15,                 # Reduced point size due to high data density
+        alpha=0.6,            # Adjusted transparency to handle overlapping points
+        label=f'Cluster {i+1}'
+    )
+
+# Plot the 10 final calculated centroids
+plt.scatter(
+    centroids[:, 0],
+    centroids[:, 1],
+    color='red',
+    marker='*',
+    s=300,
+    edgecolors='black',
+    label='Centroids'
+)
+
+plt.title('K-Means Clustering (K=10) on South Korea Territory Mesh', fontsize=14)
+plt.xlabel('Longitude (deg)')
+plt.ylabel('Latitude (deg)')
+
+# Position the legend outside the chart layout to prevent overlapping
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
