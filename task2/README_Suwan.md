@@ -41,13 +41,14 @@ Example for 10 points:
 
 The figure below shows the South Korea territory boundary, Full mesh grid, Filtered grid(inside territory ,and the final K-means centroids.
 
-![Task 2 result](task2_centroids_N17.png)
+![Task 2 result](Task2_Figure_Suwan.png)
 
 ## Explanation of the Plot
 
-- The black outline is the territory polygon.
-- The faint gray points are the rejection-sampled interior points.
-- The red points are the final K-means centroids.
+- The red outline is the territory polygon.
+- The faint gray points are the rejection-sampled points.
+- The blue points are the points that located inside territory
+- The red stars are the final K-means centroids.
 
 The plot shows that the centroids are spread out across the territory while still remaining inside the boundary. This is the goal of the task: to generate evenly distributed vertiport-style points rather than placing them manually.
 
