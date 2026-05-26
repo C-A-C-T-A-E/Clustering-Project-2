@@ -35,7 +35,7 @@ Example for 10 points:
 
 ## Output
 
-- Plot window showing the territory, interior samples, and centroids
+- Plot window showing the territory, rejection samples ,interior samples, and centroids
 
 ## Plot
 
