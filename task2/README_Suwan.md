@@ -8,7 +8,7 @@ Use the territory boundary from `data/Data_South_Korea_territory.csv`, sample ma
 
 ## Script
 
-- `task2.py`
+- `task2_Suwan.py`
 
 ## Method
 
