@@ -1,0 +1,138 @@
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import silhouette_score
+from google.colab import drive
+
+# =========================================================================
+# STEP 1: Load vertiport candidate data from Google Drive
+# =========================================================================
+
+# Mount Google Drive
+drive.mount('/content/drive')
+
+# Load dataset
+file_path = '/content/drive/MyDrive/project2 3-2/Data_vertiport_candidates.csv'
+df = pd.read_csv(file_path)
+
+# Extract features
+X = df[['Longitude (deg)', 'Latitude (deg)']].values
+
+
+# =========================================================================
+# STEP 2: Custom K-Means Function from Scratch
+# =========================================================================
+
+def run_custom_kmeans(X, k, max_iter=100, tol=1e-4, seed=42):
+    np.random.seed(seed)
+
+    # Randomly select initial centroids
+    random_indices = np.random.choice(len(X), k, replace=False)
+    centroids = X[random_indices]
+
+    for iteration in range(max_iter):
+        # Compute distances via vectorization
+        distances = np.linalg.norm(X[:, np.newaxis, :] - centroids, axis=2)
+
+        # Assign points to nearest cluster
+        clusters = np.argmin(distances, axis=1)
+
+        # Update centroids
+        new_centroids = []
+        for i in range(k):
+            cluster_points = X[clusters == i]
+
+            # Handle empty cluster
+            if len(cluster_points) == 0:
+                new_centroid = centroids[i]
+            else:
+                new_centroid = cluster_points.mean(axis=0)
+            new_centroids.append(new_centroid)
+
+        new_centroids = np.array(new_centroids)
+
+        # Check convergence
+        if np.allclose(centroids, new_centroids, atol=tol):
+            centroids = new_centroids
+            break
+
+        centroids = new_centroids
+
+    # Calculate WCSS for Elbow Method
+    wcss_val = 0
+    for i in range(k):
+        cluster_points = X[clusters == i]
+        if len(cluster_points) > 0:
+            wcss_val += np.sum((cluster_points - centroids[i]) ** 2)
+
+    return clusters, wcss_val
+
+
+# =========================================================================
+# STEP 3: Run Full Scan Optimization (K=2 to K=50)
+# =========================================================================
+
+k_min = 2
+k_max = 50
+k_range = range(k_min, k_max + 1)
+
+wcss = []
+silhouette_scores = []
+
+print("--- 🚀 Starting custom full scan from scratch (K=2 to K=50) ---")
+
+for k in k_range:
+    # Run custom clustering logic
+    cluster_labels, wcss_val = run_custom_kmeans(X, k=k)
+    wcss.append(wcss_val)
+
+    # Compute silhouette score with sample size optimization
+    score = silhouette_score(X, cluster_labels, metric='euclidean', sample_size=2000, random_state=42)
+    silhouette_scores.append(score)
+
+    # Print status for ALL iterations
+    print(f"[Scanning] K = {k:2d} | Custom WCSS = {wcss_val:.2f} | Silhouette = {score:.4f}")
+
+
+# =========================================================================
+# STEP 4: Identify the Optimal K Value
+# =========================================================================
+
+# Get best K via maximum Silhouette Score
+best_idx = np.argmax(silhouette_scores)
+optimal_k = k_range[best_idx]
+
+print("\n" + "="*70)
+print(f"🎯 Optimal number of vertiports found: {optimal_k}")
+print(f"   (Reason: K={optimal_k} achieves the maximum Silhouette Score of {silhouette_scores[best_idx]:.4f})")
+print("="*70 + "\n")
+
+
+# =========================================================================
+# STEP 5: Plot Verification Graphs (Elbow & Silhouette)
+# =========================================================================
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+# Left Y-axis: Custom WCSS (Elbow Method)
+color = 'tab:blue'
+ax1.set_xlabel('Number of Clusters (K)', fontsize=12)
+ax1.set_ylabel('WCSS (Inertia)', color=color, fontsize=12)
+ax1.plot(k_range, wcss, marker='o', color=color, linestyle='--', linewidth=1.5, markersize=4, label='WCSS (Elbow)')
+ax1.tick_params(axis='y', labelcolor=color)
+ax1.grid(True, linestyle=':', alpha=0.6)
+
+# Right Y-axis: Silhouette Score
+ax2 = ax1.twinx()
+color = 'tab:orange'
+ax2.set_ylabel('Silhouette Score', color=color, fontsize=12)
+ax2.plot(k_range, silhouette_scores, marker='s', color=color, linestyle='-', linewidth=1.5, markersize=4, label='Silhouette Score')
+ax2.tick_params(axis='y', labelcolor=color)
+
+# Draw indicator line at optimal K
+plt.axvline(x=optimal_k, color='red', linestyle=':', linewidth=2, label=f'Optimal K ({optimal_k})')
+
+plt.title('Vertiport Optimization (K=2~50)', fontsize=14, pad=15)
+fig.tight_layout()
+plt.show()
