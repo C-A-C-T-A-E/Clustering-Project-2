@@ -1,9 +1,9 @@
 # Task 2: Even Distribution in South Korea Territory
 
-This task generates evenly distributed vertiport-style points inside the South Korea territory polygon using a custom K-Means clustering algorithm[cite: 7].
+This task generates evenly distributed vertiport-style points inside the South Korea territory polygon using a custom K-Means clustering algorithm.
 
 ## Goal
-Use the territory boundary from `data/Data_South_Korea_territory.csv`, sample numerous interior points via rejection sampling, and run a self-implemented K-Means algorithm to place $N$ evenly distributed centroids ($K = 3, 5, 10$) inside the territory.
+Use the territory boundary from `data/Data_South_Korea_territory.csv`, sample numerous interior points via rejection sampling, and run a self-implemented K-Means algorithm to place $N$ evenly distributed centroids inside the territory.
 
 ## Problem and Strategy
 The main challenge is that the territory is not a simple rectangle, making it impossible to place centroids evenly by hand. 
